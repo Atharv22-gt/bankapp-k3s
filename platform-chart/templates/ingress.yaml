@@ -1,0 +1,45 @@
+{{- if .Values.ingress.bankapp.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bankapp-ingress
+  labels:
+    {{- include "platform.labels" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: {{ .Values.ingress.bankapp.className }}
+  rules:
+    - host: {{ .Values.ingress.bankapp.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bankapp-service
+                port:
+                  number: 80
+{{- end }}
+---
+{{- if .Values.ingress.kibana.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kibana-ingress
+  labels:
+    {{- include "platform.labels" . | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.ingress.kibana.className }}
+  rules:
+    - host: {{ .Values.ingress.kibana.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kibana-kibana
+                port:
+                  number: 5601
+{{- end }}

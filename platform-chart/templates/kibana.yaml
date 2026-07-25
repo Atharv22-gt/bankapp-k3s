@@ -1,0 +1,60 @@
+{{- if .Values.kibana.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana-kibana
+  labels:
+    app: kibana
+    {{- include "platform.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+        - name: kibana
+          image: "{{ .Values.kibana.image.repository }}:{{ .Values.kibana.image.tag }}"
+          resources:
+            {{- toYaml .Values.kibana.resources | nindent 12 }}
+          ports:
+            - containerPort: 5601
+          env:
+            - name: SERVER_HOST
+              value: "0.0.0.0"
+            - name: ELASTICSEARCH_HOSTS
+              value: "{{ .Values.kibana.elasticsearchHosts }}"
+          readinessProbe:
+            httpGet:
+              path: /api/status
+              port: 5601
+            initialDelaySeconds: 60
+            timeoutSeconds: 5
+            periodSeconds: 15
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /api/status
+              port: 5601
+            initialDelaySeconds: 90
+            timeoutSeconds: 5
+            periodSeconds: 20
+            failureThreshold: 6
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana-kibana
+  labels:
+    {{- include "platform.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: 5601
+      targetPort: 5601
+  selector:
+    app: kibana
+{{- end }}

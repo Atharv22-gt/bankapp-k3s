@@ -1,0 +1,9 @@
+dependencies:
+- name: elasticsearch
+  repository: https://helm.elastic.co
+  version: 8.5.1
+- name: filebeat
+  repository: https://helm.elastic.co
+  version: 8.5.1
+digest: sha256:b2ef2bbba82bf843a26a8016e82863cfc6d81083fd1d9e56bab609f929d60c89
+generated: "2026-07-25T16:05:30.843778617Z"

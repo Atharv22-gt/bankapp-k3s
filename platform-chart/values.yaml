@@ -1,0 +1,128 @@
+# ============================================================
+# Namespace: everything in this chart deploys to `webapps`
+# (set via `helm install ... -n webapps`)
+# ============================================================
+
+# ---------------------------
+# BankApp
+# ---------------------------
+bankapp:
+  image:
+    repository: rwxatharv/bankapp
+    tag: v1
+  # replicas intentionally omitted from spec — HPA controls this
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 60
+    targetMemoryUtilizationPercentage: 70
+
+# ---------------------------
+# MySQL
+# ---------------------------
+mysql:
+  rootPassword: "changeme"   # base64-encoded automatically by the template
+  database: "bankappdb"
+  storageClassName: local-path
+  storageSize: 2Gi
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+# ---------------------------
+# Ingress — BankApp
+# ---------------------------
+ingress:
+  bankapp:
+    enabled: true
+    className: nginx
+    host: bankapp.dev.local
+  kibana:
+    enabled: true
+    className: nginx
+    host: kibana.dev.local
+
+# ============================================================
+# ELK subcharts — these keys map directly to each subchart's
+# own values (same structure as their standalone values.yaml)
+# ============================================================
+
+elasticsearch:
+  enabled: true
+  fullnameOverride: elasticsearch
+  replicas: 1
+  minimumMasterNodes: 1
+  protocol: http
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "1.5Gi"
+  esJavaOpts: "-Xmx768m -Xms768m"
+  volumeClaimTemplate:
+    storageClassName: local-path
+    resources:
+      requests:
+        storage: 5Gi
+  clusterHealthCheckParams: "wait_for_status=yellow&timeout=5s"
+  extraEnvs:
+    - name: xpack.security.enabled
+      value: "false"
+    - name: xpack.security.http.ssl.enabled
+      value: "false"
+    - name: xpack.security.transport.ssl.enabled
+      value: "false"
+
+kibana:
+  enabled: true
+  image:
+    repository: docker.elastic.co/kibana/kibana
+    tag: "8.5.1"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  elasticsearchHosts: "http://elasticsearch-master:9200"
+
+filebeat:
+  enabled: true
+  daemonset:
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "100Mi"
+      limits:
+        cpu: "200m"
+        memory: "200Mi"
+  filebeatConfig:
+    filebeat.yml: |
+      filebeat.inputs:
+      - type: container
+        paths:
+          - /var/log/containers/*.log
+        processors:
+          - add_kubernetes_metadata:
+              host: ${NODE_NAME}
+              matchers:
+              - logs_path:
+                  logs_path: "/var/log/containers/"
+      output.elasticsearch:
+        hosts:
+          - http://elasticsearch-master:9200
