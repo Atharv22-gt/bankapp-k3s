@@ -1,0 +1,30 @@
+replicas: 1
+minimumMasterNodes: 1
+
+protocol: http
+
+resources:
+  requests:
+    cpu: "250m"
+    memory: "1Gi"
+  limits:
+    cpu: "1000m"
+    memory: "1.5Gi"
+
+esJavaOpts: "-Xmx768m -Xms768m"
+
+volumeClaimTemplate:
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi
+
+clusterHealthCheckParams: "wait_for_status=yellow&timeout=5s"
+
+extraEnvs:
+  - name: xpack.security.enabled
+    value: "false"
+  - name: xpack.security.http.ssl.enabled
+    value: "false"
+  - name: xpack.security.transport.ssl.enabled
+    value: "false"
