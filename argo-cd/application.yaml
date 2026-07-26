@@ -1,14 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: bankapp
+  name: bankapp-platform
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: https://github.com/Atharv22-gt/bankapp-k3s.git
     targetRevision: main
-    path: k8s
+    path: platform-chart
+    helm:
+      valueFiles:
+        - values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: webapps
@@ -17,4 +20,4 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true  
+      - CreateNamespace=true
