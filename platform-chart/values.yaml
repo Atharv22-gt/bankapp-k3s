@@ -128,3 +128,24 @@ filebeat:
       output.elasticsearch:
         hosts:
           - http://elasticsearch:9200
+
+milvus:
+  enabled: true
+  image:
+    repository: milvusdb/milvus
+    tag: "2.3.0"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+  persistence:
+    enabled: true
+    storageClassName: local-path
+    size: 5Gi
+  service:
+    type: ClusterIP
+  user: "milvus"
+  userPassword: "changeme" 
